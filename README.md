@@ -93,20 +93,24 @@ Host certificates are found in the ``store`` directory. Each host has its own
 directory with the config and signing request, and each sign operation creates
 a new directory with today's date. Use the files inside the latest directory.
 
-To add a new host:
+To add a new host::
+
     caman new <hostname> [oun]
 
 * ``oun`` is the organisational unit name - you'll probably want to use the
   hostname again. If the argument is missing, you will be prompted for it.
 
-To create a new CSR, private key and signed certificate:
+To create a new CSR, private key and signed certificate::
+
     caman sign <hostname>
 
-To revoke a certificate:
+To revoke a certificate::
+
     caman revoke <hostname>
 
 * Whenever you revoke a certificate, you will need to re-publish
   ``ca/ca.crl.pem``
 
-To replace an expired or compromised host certificate (revokes then signs):
+To replace an expired or compromised host certificate (revokes then signs)::
+
     caman renew <hostname>
