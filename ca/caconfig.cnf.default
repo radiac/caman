@@ -1,0 +1,100 @@
+#
+# CAMan configuration file for OpenSSL
+#
+
+dir                     = ./ca
+
+
+####################################################################
+[ ca ]
+default_ca    = CA_default        # The default ca section
+
+####################################################################
+[ CA_default ]
+
+database                = $dir/index.txt
+new_certs_dir           = $dir/newcerts
+certificate             = $dir/ca.crt.pem
+serial                  = $dir/serial
+crl                     = $dir/ca.crl.pem
+private_key             = $dir/ca.key.pem
+RANDFILE                = $dir/private/.rand
+
+x509_extensions         = usr_cert
+name_opt                = ca_default
+cert_opt                = ca_default
+
+# V2 CRLs
+crl_extensions          = crl_ext
+crlnumber               = $dir/crlnumber
+
+# Default expiration and encryption policies for certificates
+# 30 days for CRL, 100 years for certs
+default_crl_days        = 30
+default_days            = 36500
+default_md              = sha256
+preserve                = no
+policy                  = policy_match
+
+
+####################################################################
+# Default policy to use when generating server certificates
+# The following fields must be defined in the server certificate
+[ policy_match ]
+countryName             = supplied
+stateOrProvinceName     = supplied
+organizationName        = supplied
+organizationalUnitName  = supplied
+commonName              = supplied
+emailAddress            = supplied
+
+####################################################################
+# The default root certificate generation policy
+[ req ]
+default_bits            = 4096
+default_keyfile         = $dir/ca.key.pem
+default_md              = sha256
+prompt                  = no
+distinguished_name      = req_distinguished_name
+x509_extensions         = v3_ca
+string_mask             = utf8only
+
+####################################################################
+# Root Certificate Authority distinguished name
+# Change these fields to match your local environment
+[ req_distinguished_name ]
+# >> Change the following 6 variables:
+#   countryName must be 2 character character code
+countryName             = CN
+stateOrProvinceName     = State or province
+organizationName        = My Organisation
+organizationalUnitName  = My Certificate Authority
+commonName              = My Certificate Authority
+emailAddress            = email@example.com
+# << End changes
+
+####################################################################
+# Extensions to use when generating server certificates
+[ usr_cert ]
+basicConstraints        = CA:FALSE
+nsComment               = "OpenSSL Generated Certificate"
+subjectKeyIdentifier    = hash
+authorityKeyIdentifier  = keyid,issuer
+# >> Change the following URL
+crlDistributionPoints   = URI:http://example.com/ca.crl.pem
+# << End changes
+
+####################################################################
+# Extensions for a CA
+[ v3_ca ]
+subjectKeyIdentifier    = hash
+authorityKeyIdentifier  = keyid:always,issuer
+basicConstraints        = CA:true
+# >> Change the following URL
+crlDistributionPoints   = URI:http://example.com/ca.crl.pem
+# << End changes
+
+####################################################################
+# CRL extensions.
+[ crl_ext ]
+authorityKeyIdentifier  = keyid:always

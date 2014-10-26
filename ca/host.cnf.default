@@ -1,0 +1,31 @@
+#
+# Host configuration
+#
+
+[ ca ]
+default_ca              = local_ca
+
+[ local_ca ]
+# Default expiration and encryption policies for certificates
+# 10 years for certs
+default_days            = 3650
+
+[ req ]
+prompt                  = no
+distinguished_name      = host_distinguished_name
+req_extensions          = v3_req
+
+[ host_distinguished_name ]
+# >> Change the following 4 variables:
+#   countryName must be 2 character character code
+countryName             = CN
+stateOrProvinceName     = State or province
+organizationName        = My Organisation
+emailAddress            = email@example.com
+# << End changes
+commonName              = <<HOSTNAME>>
+organizationalUnitName  = <<OUN>>
+
+[ v3_req ]
+basicConstraints        = CA:FALSE
+keyUsage                = nonRepudiation, digitalSignature, keyEncipherment

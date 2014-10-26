@@ -1,0 +1,4 @@
+ca/*
+!ca/caconfig.cnf.default
+!ca/host.cnf.default
+store/*

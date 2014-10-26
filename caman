@@ -1,0 +1,240 @@
+#!/bin/bash
+
+#
+# Initialise
+#
+
+# Arguments
+CMD=$1
+HOST=$2
+
+# Paths
+CADIR="ca"
+STOREDIR="store"
+HOSTDIR="$STOREDIR/$HOST"
+DATEDIR=$(date +"%Y-%m-%d")
+
+# Check cert authority directory exists
+if [[ ! -d "$CADIR" ]]; then
+    echo "Certificate authority directory does not exist"
+    exit 1
+fi
+
+
+#
+# Functions
+#
+
+function generate_crl {
+    # Generate the CRL
+    # OpenSSL arguments:
+    #   ca                  Command for CA management
+    #   -gencrl             Generate a CRL
+    #   -out "..."          Path to CRL
+    #   -config "..."       Path to CA config
+    echo "Generating CRL..."
+    openssl ca -gencrl -out "$CADIR/crl.pem" -config "$CADIR/caconfig.cnf"
+}
+
+
+#
+# Process command
+#
+
+case "$CMD" in
+    init)
+        #
+        # Initialise a new certificate authority
+        #
+        
+        # Check for existing CA certificate
+        if [[ -f "$CADIR/ca.crt.pem" ]] ; then
+            echo "Certificate authority already exists"
+            exit 1
+        fi
+
+        # Check config exists
+        if [[ ! -f "$CADIR/caconfig.cnf" ]] ; then
+            echo "Could not find caconfig.cnf"
+            exit 1
+        fi
+
+        # Set up supporting files and dirs
+        mkdir "$CADIR/newcerts" "$STOREDIR" || exit 1
+        touch "$CADIR/index.txt"
+        echo '01' > "$CADIR/serial"
+        
+        # Get CA age
+        DAYS=$( \
+            perl -nle 'print $1 if /^default_days\s+=\s+(\d+)$/' \
+            $CADIR/caconfig.cnf \
+        )
+        if [[ -z $DAYS ]] ; then
+            echo "Cannot find default_days in caconfig.cnf"
+            exit 1
+        fi
+        
+        # Create CA key
+        # OpenSSL arguments:
+        #   genrsa              Command for generating an RSA key
+        #   -aes256             Encrypt it with AES 256
+        #   -out "..."          Path to key
+        #   4096                Number of bits
+        echo "Generating CA private key..."
+        openssl genrsa -aes256 -out "$CADIR/ca.key.pem" 4096 || exit 1
+        chmod 400 "$CADIR/ca.key.pem"
+        
+        # Create CA certificate
+        # OpenSSL arguments:
+        #   req                 Command for CSR management
+        #   -x509               Output a self-signed certificate instead of CSR
+        #   -new                Generate a new certificate
+        #   -nodes              Do not encrypt the key
+        #   -out                Path to signed certificate
+        #   -days $DAYS         Number of days this certificate will be valid
+        #   -config "..."       Path to CA config
+        echo "Signing CA public certificate..."
+        openssl req -x509 -new -nodes -key "$CADIR/ca.key.pem" -days $DAYS \
+            -out "$CADIR/ca.crt.pem" -config "$CADIR/caconfig.cnf" \
+            || exit 1
+        
+        # Create the CRL
+        echo '01' > "$CADIR/crlnumber"
+        generate_crl
+        
+        echo "Certificate authority created"
+        
+        ;;
+        
+    new)
+        #
+        # Add a new host
+        #
+        
+        # Create new config
+        mkdir "$HOSTDIR"
+        cp "$CADIR/host.cnf" "$HOSTDIR/config.cnf"
+        perl -pi -e "s/<<HOSTNAME>>/$HOST/g" "$HOSTDIR/config.cnf"
+        
+        OUN=$3
+        if [[ -z $OUN ]] ; then
+            read -p "Organizational Unit Name (eg name of host): " OUN
+        fi
+        perl -pi -e "s/<<OUN>>/$OUN/g" "$HOSTDIR/config.cnf"
+        
+        echo "New host added"
+        
+        ;;
+        
+    sign)
+        #
+        # Create a new CSR, private key and signed certificate
+        #
+        
+        # Get certificate age
+        DAYS=$( \
+            perl -nle 'print $1 if /^default_days\s+=\s+(\d+)$/' \
+            $HOSTDIR/config.cnf \
+        )
+        if [[ -z $DAYS ]] ; then
+            echo "Cannot find default_days in $HOSTDIR/config.cnf"
+            exit 1
+        fi
+        
+        # Determine where the cert is going
+        CERTDIR="$HOSTDIR/$DATEDIR"
+        INSTANCE=1
+        while [[ -e "$CERTDIR-$INSTANCE" ]] ; do
+            let INSTANCE++
+        done
+        CERTDIR="$CERTDIR-$INSTANCE"
+        
+        # Generate directory for this cert
+        mkdir "$CERTDIR" || exit 1
+        
+        # Create a new CSR and private key
+        # OpenSSL arguments:
+        #   req                 Command for CSR management
+        #   -new                Generate a new CSR
+        #   -sha256             Force OpenSSL to use SHA256
+        #   -newkey rsa:2048    Generate a new 2048 bit RSA private key
+        #   -nodes              Do not encrypt the private key
+        #   -keyout "..."       Path to save new key
+        #   -out "..."          Path to save new CSR
+        #   -config "..."       Path to host config created by ``new``
+        echo "Creating CSR and private key..."
+        openssl req -sha256 \
+            -newkey rsa:2048 -nodes -keyout "$CERTDIR/$HOST.key.pem" \
+            -new -out "$CERTDIR/$HOST.csr" \
+            -config "$HOSTDIR/config.cnf" \
+            || exit 1
+        
+        # Sign the request
+        # OpenSSL arguments:
+        #   ca                  Command for CA management
+        #   -in                 Path to CSR
+        #   -out                Path to signed certificate
+        #   -days $DAYS         Number of days this certificate will be valid
+        #   -config "..."       Path to CA config created by ``init``
+        echo "Signing the certificate..."
+        openssl ca \
+            -in "$CERTDIR/$HOST.csr" -out "$CERTDIR/$HOST.crt.pem" \
+            -days $DAYS -config "$CADIR/caconfig.cnf" \
+            || exit 1
+
+        # Concat the key and certificate
+        cat "$CERTDIR/$HOST.key.pem" "$CERTDIR/$HOST.crt.pem" \
+            > "$CERTDIR/$HOST.keycrt.pem"
+        echo "Certificate generated"
+        
+        ;;
+        
+    revoke)
+        # Read index of valid cert for this host
+        INDEX=$( \
+            grep "/CN=$HOST/" $CADIR/index.txt \
+            | perl -ne 'print $1 if /^V\t+[0-9Z]+\t\t([0-9A-F]+)\t.*$/' \
+        )
+        if [[ -z $INDEX ]] ; then
+            echo "Cannot find valid certificate for $HOST"
+            exit 1
+        fi
+        echo "Revoking certificate $INDEX..."
+
+        # Revoke the certificate
+        # OpenSSL arguments:
+        #   ca                  Command for CA management
+        #   -revoke "..."       Certificate to revoke
+        #   -config "..."       Path to CA config created by ``init``
+        openssl ca \
+            -revoke "$CADIR/newcerts/$INDEX.pem" \
+            -config "$CADIR/caconfig.cnf" \
+            || exit 1
+        
+        # Update the CRL
+        generate_crl
+        
+        echo "Certificate revoked"
+        
+        ;;
+        
+    renew)
+        # A renewal is a revoke followed by sign
+        ./$0 revoke $HOST && ./$0 sign $HOST
+        
+        ;;
+        
+    *)
+        cat <<EOF
+Usage:  caman init
+        caman new <hostname> [oun]
+        caman sign <hostname>
+        caman revoke <hostname>
+        caman renew <hostname>
+EOF
+        
+        ;;
+
+esac
+
+exit 0
