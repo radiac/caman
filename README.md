@@ -20,31 +20,30 @@ Creating a Certificate Authority
 
         git clone https://github.com/radiac/caman.git
 
-2. Optional: Copy files into a new private repository
-
    The ``.gitignore`` is set up to ignore all files CAMan will create. This is
    to prevent you from accidentally pushing secrets to a public repository.
    
-   If you don't want to store your certificate authority in a git repository,
-   you can work inside this cloned public repository.
+2. Configure the files in ``ca`` - (see [Configuration](#configuration))
    
-3. Configure the files in ``ca`` - (see [Configuration](#configuration))
-   
-4. Initialise caman in the current directory::
+3. Initialise caman in the current directory::
 
+        cd caman
         ./caman init
 
    * You will be asked for a PEM key - this must be at least 4 characters long,
      but the longer the better. Keep it safe - you will need it whenever caman
      needs to use the CA key.
 
-   You are now ready to create and manage host certificates.
+   You are now ready to
+   [create and manage host certificates](#managing-host-certificates).
 
-5. Optional: Distribute ``ca/ca.crt.pem`` for your host certificates to be
+4. Optional: Distribute ``ca/ca.crt.pem`` for your host certificates to be
    recognised.
+   
+   For compatibility with Windows, you'll want to distribute it as ``ca.crt``.
 
-6. Publish ``ca/ca.crl.pem`` at the URL in your configuration (unless you
-   disabled CRL in your config).
+5. Optional: Publish ``ca/ca.crl.pem`` at the URL in your configuration
+   (or you can you disable CRL in your config).
 
 Keep ``ca/ca.key.pem`` private. If it is compromised, you will need to destroy
 your certificate authority and start again.
@@ -95,22 +94,23 @@ a new directory with today's date. Use the files inside the latest directory.
 
 To add a new host::
 
-    caman new <hostname> [oun]
+    ./caman new <hostname> [oun]
 
 * ``oun`` is the organisational unit name - you'll probably want to use the
   hostname again. If the argument is missing, you will be prompted for it.
+* Example: ``./caman new myserver.example.com myserver``
 
 To create a new CSR, private key and signed certificate::
 
-    caman sign <hostname>
+    ./caman sign <hostname>
 
 To revoke a certificate::
 
-    caman revoke <hostname>
+    ./caman revoke <hostname>
 
 * Whenever you revoke a certificate, you will need to re-publish
   ``ca/ca.crl.pem``
 
 To replace an expired or compromised host certificate (revokes then signs)::
 
-    caman renew <hostname>
+    ./caman renew <hostname>

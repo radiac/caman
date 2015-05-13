@@ -33,7 +33,7 @@ function generate_crl {
     #   -out "..."          Path to CRL
     #   -config "..."       Path to CA config
     echo "Generating CRL..."
-    openssl ca -gencrl -out "$CADIR/crl.pem" -config "$CADIR/caconfig.cnf"
+    openssl ca -gencrl -out "$CADIR/ca.crl.pem" -config "$CADIR/caconfig.cnf"
 }
 
 
