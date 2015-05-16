@@ -1,5 +1,5 @@
 #
-# CAMan configuration file for OpenSSL
+# Certificate authority configuration file for OpenSSL
 #
 
 dir                     = ./ca
