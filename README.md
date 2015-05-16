@@ -5,7 +5,7 @@ A self-signing certificate authority manager - create your own certificate
 authority, and generate and manage SSL certificates.
 
 If you want to see how caman works, read the accompanying article,
-[Self-Signing Certificate Authorities][]
+[Self-Signing Certificate Authorities][http://radiac.net/blog/2015/05/self-ca/]
 
 This document explains how to use caman to
 [create a certificate authority](#creating-a-certificate-authority), and to
@@ -32,7 +32,7 @@ Creating a Certificate Authority
 
    * You will be asked for a PEM key - this must be at least 4 characters long,
      but the longer the better. Keep it safe - you will need it whenever caman
-     needs to use the CA key.
+     needs to use the CA key (frequently).
 
    You are now ready to
    [create and manage host certificates](#managing-host-certificates).
@@ -98,6 +98,7 @@ To add a new host::
 
 * ``oun`` is the organisational unit name - you'll probably want to use the
   hostname again. If the argument is missing, you will be prompted for it.
+* Use an asterisk to generate a wildcard certificate, eg ``*.example.com``
 * Example: ``./caman new myserver.example.com myserver``
 
 To create a new CSR, private key and signed certificate::

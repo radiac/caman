@@ -67,7 +67,7 @@ case "$CMD" in
         # Get CA age
         DAYS=$( \
             perl -nle 'print $1 if /^default_days\s+=\s+(\d+)$/' \
-            $CADIR/caconfig.cnf \
+            "$CADIR/caconfig.cnf" \
         )
         if [[ -z $DAYS ]] ; then
             echo "Cannot find default_days in caconfig.cnf"
@@ -89,12 +89,11 @@ case "$CMD" in
         #   req                 Command for CSR management
         #   -x509               Output a self-signed certificate instead of CSR
         #   -new                Generate a new certificate
-        #   -nodes              Do not encrypt the key
         #   -out                Path to signed certificate
         #   -days $DAYS         Number of days this certificate will be valid
         #   -config "..."       Path to CA config
         echo "Signing CA public certificate..."
-        openssl req -x509 -new -nodes -key "$CADIR/ca.key.pem" -days $DAYS \
+        openssl req -x509 -new -key "$CADIR/ca.key.pem" -days $DAYS \
             -out "$CADIR/ca.crt.pem" -config "$CADIR/caconfig.cnf" \
             || exit 1
         
@@ -134,7 +133,7 @@ case "$CMD" in
         # Get certificate age
         DAYS=$( \
             perl -nle 'print $1 if /^default_days\s+=\s+(\d+)$/' \
-            $HOSTDIR/config.cnf \
+            "$HOSTDIR/config.cnf" \
         )
         if [[ -z $DAYS ]] ; then
             echo "Cannot find default_days in $HOSTDIR/config.cnf"
@@ -192,7 +191,7 @@ case "$CMD" in
     revoke)
         # Read index of valid cert for this host
         INDEX=$( \
-            grep "/CN=$HOST/" $CADIR/index.txt \
+            grep -F "/CN=$HOST/" $CADIR/index.txt \
             | perl -ne 'print $1 if /^V\t+[0-9Z]+\t\t([0-9A-F]+)\t.*$/' \
         )
         if [[ -z $INDEX ]] ; then
@@ -220,7 +219,7 @@ case "$CMD" in
         
     renew)
         # A renewal is a revoke followed by sign
-        ./$0 revoke $HOST && ./$0 sign $HOST
+        ./"$0" revoke "$HOST" && ./"$0" sign "$HOST"
         
         ;;
         
