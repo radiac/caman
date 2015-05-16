@@ -5,7 +5,7 @@ A self-signing certificate authority manager - create your own certificate
 authority, and generate and manage SSL certificates.
 
 If you want to see how caman works, read the accompanying article,
-[Self-Signing Certificate Authorities][http://radiac.net/blog/2015/05/self-ca/]
+[Self-Signing Certificate Authorities](http://radiac.net/blog/2015/05/self-ca/)
 
 This document explains how to use caman to
 [create a certificate authority](#creating-a-certificate-authority), and to
@@ -92,26 +92,38 @@ Host certificates are found in the ``store`` directory. Each host has its own
 directory with the config and signing request, and each sign operation creates
 a new directory with today's date. Use the files inside the latest directory.
 
-To add a new host::
+Add a new host
+--------------
 
     ./caman new <hostname> [oun]
 
 * ``oun`` is the organisational unit name - you'll probably want to use the
   hostname again. If the argument is missing, you will be prompted for it.
 * Use an asterisk to generate a wildcard certificate, eg ``*.example.com``
-* Example: ``./caman new myserver.example.com myserver``
+* Example: ``./caman new myserver.example.com "My server"``
 
-To create a new CSR, private key and signed certificate::
+
+Create a new certificate
+------------------------
 
     ./caman sign <hostname>
 
-To revoke a certificate::
+This will generate a new private key, CSR, and signed certificate
+
+
+Revoke a certificate
+--------------------
 
     ./caman revoke <hostname>
 
-* Whenever you revoke a certificate, you will need to re-publish
-  ``ca/ca.crl.pem``
+You will need to re-publish ``ca/ca.crl.pem`` after running this command.
 
-To replace an expired or compromised host certificate (revokes then signs)::
+
+Renew a certificate
+-------------------
 
     ./caman renew <hostname>
+
+This revokes the existing certificate, and then creates a new one,
+so is suitable for replacing both expired or compromised host certificates
+You will need to re-publish ``ca/ca.crl.pem`` after running this command.
