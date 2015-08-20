@@ -46,6 +46,11 @@ Creating a Certificate Authority
    
    For compatibility with Windows, you'll want to distribute it as ``ca.crt``.
 
+   *TIP* If you want your certificate to be recognized system-wide on Linux systems you'll want to place it beneath /etc/openssl/certs/$hash.0.  To generate the hash run:
+  
+     openssl x509 -inform PEM -subject_hash -in ca/ca.crt.pem | head -1
+
+
 6. Optional: Publish ``ca/ca.crl.pem`` at the URL in your configuration
    (or you can you disable CRL in your config).
 
