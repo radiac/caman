@@ -2,9 +2,10 @@ caman
 =====
 
 A self-signing certificate authority manager - create your own certificate
-authority, and generate and manage SSL certificates.
+authority, and generate and manage SSL certificates using openssl.
 
-If you want to see how caman works, read the accompanying article,
+If you want to see how caman works and why it exists, you read the
+accompanying article,
 [Self-Signing Certificate Authorities](http://radiac.net/blog/2015/05/self-ca/)
 
 This document explains how to use caman to
@@ -16,16 +17,19 @@ certificates.
 Creating a Certificate Authority
 ================================
 
-1. Clone this repository:
+1. Make sure ``openssl`` is installed on your system before using caman:
+   * Ubuntu: ``sudo apt-get install openssl``
+
+2. Clone this repository:
 
         git clone https://github.com/radiac/caman.git
 
-   The ``.gitignore`` is set up to ignore all files CAMan will create. This is
+   The ``.gitignore`` is set up to ignore all files caman will create. This is
    to prevent you from accidentally pushing secrets to a public repository.
    
-2. Configure the files in ``ca`` - (see [Configuration](#configuration))
+3. Configure the files in ``ca`` - (see [Configuration](#configuration))
    
-3. Initialise caman in the current directory::
+4. Initialise caman in the current directory:
 
         cd caman
         ./caman init
@@ -37,12 +41,12 @@ Creating a Certificate Authority
    You are now ready to
    [create and manage host certificates](#managing-host-certificates).
 
-4. Optional: Distribute ``ca/ca.crt.pem`` for your host certificates to be
+5. Optional: Distribute ``ca/ca.crt.pem`` for your host certificates to be
    recognised.
    
    For compatibility with Windows, you'll want to distribute it as ``ca.crt``.
 
-5. Optional: Publish ``ca/ca.crl.pem`` at the URL in your configuration
+6. Optional: Publish ``ca/ca.crl.pem`` at the URL in your configuration
    (or you can you disable CRL in your config).
 
 Keep ``ca/ca.key.pem`` private. If it is compromised, you will need to destroy
