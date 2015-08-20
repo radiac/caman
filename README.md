@@ -1,5 +1,4 @@
-caman
-=====
+## caman
 
 A self-signing certificate authority manager - create your own certificate
 authority, and generate and manage SSL certificates using openssl.
@@ -13,9 +12,11 @@ This document explains how to use caman to
 [create, sign, renew and revoke](#managing-host-certificates) host
 certificates.
 
+Version 0.2.0rc1, 2015-08-20. For changelog and upgrade information, see
+[Changes](CHANGES.md)
 
-Creating a Certificate Authority
-================================
+
+### Creating a Certificate Authority
 
 1. Make sure ``openssl`` is installed on your system before using caman:
    * Ubuntu: ``sudo apt-get install openssl``
@@ -53,8 +54,7 @@ Keep ``ca/ca.key.pem`` private. If it is compromised, you will need to destroy
 your certificate authority and start again.
 
 
-Configuration
--------------
+#### Configuration
 
 Copy the default configs:
    
@@ -80,51 +80,58 @@ Changes to make in ``ca/caconfig.cnf``:
 * The lifespan of your CA is ``default_days`` - 100 years by default
 
 In ``ca/host.cnf``:
-* Change 4 of the values under ``[ host_distinguished_name ]``:
+* Change 5 of the values under ``[ host_distinguished_name ]``:
   * ``countryName``: the two-character country code for this host
   * ``stateOrProvinceName``: the state or province for this host
   * ``organizationName``: the name of the organisation for this host
+  * ``organizationUnitName``: your department in the organisation
   * ``emailAddress``: the e-mail address for the admin for this host
-  * Do not change ``commonName`` or ``organizationUnitName`` - these are placeholders which will be set by caman
-* The lifespan of your host certs is ``default_days``, 10 years by default
+  * Do not change ``commonName`` - this is a placeholder which will be set by
+    caman
+* The lifespan of your host certs is ``default_days`` - 10 years by default
 
 
-Managing host certificates
-==========================
+### Managing host certificates
 
 Host certificates are found in the ``store`` directory. Each host has its own
 directory with the config and signing request, and each sign operation creates
 a new directory with today's date. Use the files inside the latest directory.
 
-Add a new host
---------------
+#### Add a new host
 
-    ./caman new <hostname> [oun]
+    ./caman new <hostname> [<alt> [<alt> ...]]
 
-* ``oun`` is the organisational unit name - you'll probably want to use the
-  hostname again. If the argument is missing, you will be prompted for it.
-* Use an asterisk to generate a wildcard certificate, eg ``*.example.com``
-* Example: ``./caman new myserver.example.com "My server"``
+* ``<hostname>`` is the main hostname for the certificate
+* Use an asterisk subdomain to generate a wildcard certificate
+* Add multiple ``<alt>`` hostnames after the main hostname to create a SAN
+  certificate
+
+Examples:
+* Single host: ``./caman new myserver.example.com``
+* Wildcard: ``./caman new *.example.com``
+* SAN: ``./caman new myserver.example.com virtual1.example.com virtual2.example.com``
+
+This command generates a config file for this host in
+``store/hostname/config.cnf``, using the defaults you configured in
+``ca/host.cnf``. You can edit this file manually to customise it further (for
+example, to change the organisational unit name from your default).
 
 
-Create a new certificate
-------------------------
+#### Create a new certificate
 
     ./caman sign <hostname>
 
 This will generate a new private key, CSR, and signed certificate
 
 
-Revoke a certificate
---------------------
+#### Revoke a certificate
 
     ./caman revoke <hostname>
 
 You will need to re-publish ``ca/ca.crl.pem`` after running this command.
 
 
-Renew a certificate
--------------------
+#### Renew a certificate
 
     ./caman renew <hostname>
 

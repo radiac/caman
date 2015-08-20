@@ -36,6 +36,9 @@ default_md              = sha256
 preserve                = no
 policy                  = policy_match
 
+# Needed to copy SANs from CSR to cert
+copy_extensions         = copy
+
 
 ####################################################################
 # Default policy to use when generating server certificates

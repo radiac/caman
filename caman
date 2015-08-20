@@ -4,6 +4,8 @@
 # Initialise
 #
 
+VERSION="0.2.0rc1"
+
 # Arguments
 CMD=$1
 HOST=$2
@@ -111,16 +113,27 @@ case "$CMD" in
         #
         
         # Create new config
-        mkdir "$HOSTDIR"
+        mkdir "$HOSTDIR" || exit 1
         cp "$CADIR/host.cnf" "$HOSTDIR/config.cnf"
+        
+        # Set hostname
         perl -pi -e "s/<<HOSTNAME>>/$HOST/g" "$HOSTDIR/config.cnf"
         
-        OUN=$3
-        if [[ -z $OUN ]] ; then
-            read -p "Organizational Unit Name (eg name of host): " OUN
-        fi
-        perl -pi -e "s/<<OUN>>/$OUN/g" "$HOSTDIR/config.cnf"
-        
+        # Add alt hostnames
+        export CAMAN_ALT_HOSTNAMES="${*:3}"
+        PERL_ALT_HOSTNAMES='
+            if (/<<ALT_HOSTNAMES>>/) {
+                my @hosts = split(/ /, "'$CAMAN_ALT_HOSTNAMES'");
+                foreach $h (@hosts) {
+                    $h = ($h =~ /^\d+(\.\d+){3}+$/ ? "IP:" : "DNS:") . $h;
+                }
+                print "subjectAltName = " . join(", ", @hosts) . "\n" if @hosts;
+            } else {
+                print;
+            }
+            '
+        perl -ni -e "$PERL_ALT_HOSTNAMES" "$HOSTDIR/config.cnf"
+
         echo "New host added"
         
         ;;
@@ -225,8 +238,10 @@ case "$CMD" in
         
     *)
         cat <<EOF
+Caman version $VERSION
+
 Usage:  caman init
-        caman new <hostname> [oun]
+        caman new <hostname> [<alt> [<alt> [...]]]
         caman sign <hostname>
         caman revoke <hostname>
         caman renew <hostname>

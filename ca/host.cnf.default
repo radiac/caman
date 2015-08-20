@@ -21,11 +21,12 @@ req_extensions          = v3_req
 countryName             = CN
 stateOrProvinceName     = State or province
 organizationName        = My Organisation
+organizationalUnitName  = My Department
 emailAddress            = email@example.com
 # << End changes
 commonName              = <<HOSTNAME>>
-organizationalUnitName  = <<OUN>>
 
 [ v3_req ]
 basicConstraints        = CA:FALSE
 keyUsage                = nonRepudiation, digitalSignature, keyEncipherment
+<<ALT_HOSTNAMES>>
