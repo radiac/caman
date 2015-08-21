@@ -19,7 +19,7 @@ Version 0.2.0, 2015-08-21. For changelog and upgrade information, see
 ### Creating a Certificate Authority
 
 1. Make sure ``openssl`` is installed on your system before using caman:
-   * Ubuntu: ``sudo apt-get install openssl``
+   * Debian and Ubuntu: ``sudo apt-get install openssl``
 
 2. Clone this repository:
 
@@ -46,9 +46,7 @@ Version 0.2.0, 2015-08-21. For changelog and upgrade information, see
    (or you can you disable CRL in your config).
 
 6. Optional: Distribute ``ca/ca.crt.pem`` for your host certificates to be
-   recognised.
-   
-   See [Distribution](#distribution) for more information
+   recognised; see [Distribution](#distribution) for more information
 
 Keep ``ca/ca.key.pem`` private. If it is compromised, you will need to destroy
 your certificate authority and start again.
@@ -116,6 +114,10 @@ To install system-wide in Windows:
    long as the file extension is ``.crt``, Windows Certificate Manager will
    open it.
 2. Click "Install certificate..." and accept all defaults
+
+Some applications (such as Firefox and Thunderbird) have their own certificate
+stores; you may need to install your root certificate in these applications
+separately.
 
 
 ### Managing host certificates
