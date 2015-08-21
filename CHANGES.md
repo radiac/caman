@@ -2,7 +2,7 @@
 
 ### Changelog
 
-**0.2.0**, 2015-08-20: Add SAN support
+**0.2.0**, 2015-08-21: Add SAN support
 * See [Upgrading](#upgrading) below for upgrade instructions
 * ``new`` command changed to replace OUN with alt hostnames to support SANs
 * Version number now displayed when called with missing or incorrect arguments
