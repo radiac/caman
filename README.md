@@ -91,11 +91,8 @@ In ``ca/host.cnf``:
 
 #### Distribution
 
-You need to distribute your ``ca/ca.crt.pem`` for your host certificates to be
-recognised.
-
-To be recognised in Windows you will need to remove the ``.pem`` file extension
-and distribute the file as ``ca.crt``.
+You need to distribute your ``ca/ca.crt.pem`` to clients for your host
+certificates to be recognised.
 
 To install system-wide in Debian and Ubuntu:
 
@@ -110,10 +107,11 @@ To install system-wide in other Linux distros:
 
 To install system-wide in Windows:
 
-1. Open the file from your filer or Internet Explorer like a normal file. As
-   long as the file extension is ``.crt``, Windows Certificate Manager will
-   open it.
-2. Click "Install certificate..." and accept all defaults
+1. For Windows Certificate Manager to recognise your certificate, you will need
+   to remove the ``.pem`` file extension and distribute the file as ``ca.crt``.
+2. Open the file from your filer or Internet Explorer like a normal file;
+   Windows Certificate Manager will be used automatically.
+3. Click "Install certificate..." and accept all defaults
 
 Some applications (such as Firefox and Thunderbird) have their own certificate
 stores; you may need to install your root certificate in these applications
