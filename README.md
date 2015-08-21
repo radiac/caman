@@ -42,18 +42,13 @@ Version 0.2.0rc1, 2015-08-20. For changelog and upgrade information, see
    You are now ready to
    [create and manage host certificates](#managing-host-certificates).
 
-5. Optional: Distribute ``ca/ca.crt.pem`` for your host certificates to be
+5. Optional: Publish ``ca/ca.crl.pem`` at the URL in your configuration
+   (or you can you disable CRL in your config).
+
+6. Optional: Distribute ``ca/ca.crt.pem`` for your host certificates to be
    recognised.
    
-   For compatibility with Windows, you'll want to distribute it as ``ca.crt``.
-
-   *TIP* If you want your certificate to be recognized system-wide on Linux systems you'll want to place it beneath /etc/openssl/certs/$hash.0.  To generate the hash run:
-  
-     openssl x509 -inform PEM -subject_hash -in ca/ca.crt.pem | head -1
-
-
-6. Optional: Publish ``ca/ca.crl.pem`` at the URL in your configuration
-   (or you can you disable CRL in your config).
+   See [Distribution](#distribution) for more information
 
 Keep ``ca/ca.key.pem`` private. If it is compromised, you will need to destroy
 your certificate authority and start again.
@@ -94,6 +89,33 @@ In ``ca/host.cnf``:
   * Do not change ``commonName`` - this is a placeholder which will be set by
     caman
 * The lifespan of your host certs is ``default_days`` - 10 years by default
+
+
+#### Distribution
+
+You need to distribute your ``ca/ca.crt.pem`` for your host certificates to be
+recognised.
+
+To be recognised in Windows you will need to remove the ``.pem`` file extension
+and distribute the file as ``ca.crt``.
+
+To install system-wide in Debian and Ubuntu:
+
+    sudo cp ca/ca.crt.pem /usr/local/share/ca-certificates/my_ca_name.crt
+    sudo dpkg-reconfigure ca-certificates
+
+To install system-wide in other Linux distros:
+
+    cp ca/ca.crt.pem "/etc/openssl/certs/$( \
+        openssl x509 -inform PEM -subject_hash -in ca/ca.crt.pem | head -1 \
+    ).0"
+
+To install system-wide in Windows:
+
+1. Open the file from your filer or Internet Explorer like a normal file. As
+   long as the file extension is ``.crt``, Windows Certificate Manager will
+   open it.
+2. Click "Install certificate..." and accept all defaults
 
 
 ### Managing host certificates
