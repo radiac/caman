@@ -2,6 +2,19 @@
 
 ### Changelog
 
+**0.3.0**, 2015-09-08: Add intermediate CA support
+* See [Upgrading](#upgrading) below for upgrade instructions
+* ``init`` command changed to accept optional path to root caman CA dir
+* ``sign`` command changed to create combined chain/crt file
+* ``revoke`` command changed to support revoking intermediate CAs
+* ``caman`` script now detects and uses absolute paths, so can be installed
+  system-wide
+* Certificates are now signed with ``-notext`` so certificates are smaller and
+  are accepted by more systems
+* Password prompt is now managed by caman, so only needs to be entered once per
+  command
+* ``openssl`` commands are now run in non-interactive mode
+
 **0.2.0**, 2015-08-21: Add SAN support
 * See [Upgrading](#upgrading) below for upgrade instructions
 * ``new`` command changed to replace OUN with alt hostnames to support SANs
@@ -12,6 +25,22 @@
 
 <a name="upgrading"></a>
 ### Upgrading
+
+#### Upgrading from 0.2.0
+
+Host certificates are now created with the ``-notext`` option to suppress the
+human-readable text summary at the top of certificates, as it unnecessarily
+increases their file size, and can apparently cause problems for some systems.
+If you haven't had any problems there is no need to modify existing host
+certificates, but you can ``renew`` host certificates to generate new ones
+without the text summary, or manually remove the text summaries from your
+``.crt.pem`` and ``.keycrt.pem`` files (the human-readable section which
+starts ``Certificate``, before ``-----BEGIN CERTIFICATE-----``).
+
+No other changes are required for this version; your existing CA can be used as
+a root CA without any changes to its config, or to certificates which are
+already in use.
+
 
 #### Upgrading from 0.1.0
 

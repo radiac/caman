@@ -12,7 +12,7 @@ This document explains how to use caman to
 [create, sign, renew and revoke](#managing-host-certificates) host
 certificates.
 
-Version 0.2.0, 2015-08-21. For changelog and upgrade information, see
+Version 0.3.0, 2015-09-08. For changelog and upgrade information, see
 [Changes](CHANGES.md)
 
 
@@ -28,7 +28,16 @@ Version 0.2.0, 2015-08-21. For changelog and upgrade information, see
    The ``.gitignore`` is set up to ignore all files caman will create. This is
    to prevent you from accidentally pushing secrets to a public repository.
    
-3. Configure the files in ``ca`` - (see [Configuration](#configuration))
+   Although these instructions assume you'll keep everything in the cloned
+   directory, the ``caman`` script operates on the current working directory
+   and just expects it to contain the ``ca`` directory.
+   
+   This means you can move/symlink the script to ``/usr/local/bin/`` to make it
+   available system-wide, or move the ``ca`` directory into a separate folder
+   or repository.
+   
+3. Configure the files in the ``ca`` directory -
+   (see [Configuration](#configuration))
    
 4. Initialise caman in the current directory:
 
@@ -36,16 +45,21 @@ Version 0.2.0, 2015-08-21. For changelog and upgrade information, see
         ./caman init
 
    * You will be asked for a PEM key - this must be at least 4 characters long,
-     but the longer the better. Keep it safe - you will need it whenever caman
-     needs to use the CA key (frequently).
+     but the longer the better. Keep it safe - you will need it for most caman
+     commands.
+   * If you plan to use a intermediate CAs, this will be your root CA.
 
    You are now ready to
    [create and manage host certificates](#managing-host-certificates).
 
-5. Optional: Publish ``ca/ca.crl.pem`` at the URL in your configuration
+5. Optional: Create an intermediate CA to do your day-to-day signing, so you
+   can keep your root CA key safe and offline. See
+   [Using an intermediate CA](#using-an-intermediate-ca) for details.
+
+6. Optional: Publish ``ca/ca.crl.pem`` at the URL in your configuration
    (or you can you disable CRL in your config).
 
-6. Optional: Distribute ``ca/ca.crt.pem`` for your host certificates to be
+7. Optional: Distribute ``ca/ca.crt.pem`` for your host certificates to be
    recognised; see [Distribution](#distribution) for more information
 
 Keep ``ca/ca.key.pem`` private. If it is compromised, you will need to destroy
@@ -116,6 +130,111 @@ To install system-wide in Windows:
 Some applications (such as Firefox and Thunderbird) have their own certificate
 stores; you may need to install your root certificate in these applications
 separately.
+
+
+### Using an intermediate CA
+
+When running a CA, it is best practice to use an intermediate CA. You will
+publish your root CA's public certificate as normal, but can store your root
+CA's private key offline and use your intermediate CA to sign host
+certificates.
+
+If your intermediate CA's private key is then compromised, you can revoke your
+current intermediate CA and create a new one, without needing to re-issue your
+root CA's public certificate.
+
+A paranoid user may want to create and use their root key on a machine which is
+permanently air-gapped and never connects to a network. If you don't have one
+of those available, it should be sufficient to move your root CA to removable
+media, kept offline in a secure location.
+
+Caman supports multiple intermediate CAs from your root CA, and intermediate
+CAs can be used to create longer chains of intermediate CAs as desired.
+
+
+#### Creating an intermediate CA
+
+Creating an intermediate CA is exactly the same as creating a root CA, but
+you pass the path of your root CA to the ``init`` command, and only publish
+the CRT for your root CA:
+
+1. Follow the (standard installation)[#creating-a-certificate-authority] to
+   create your root CA, including publishing its CRL and distributing its CRT.
+
+2. Create a new caman installation for your intermediate CA:
+
+        cd ../
+        mv caman caman-root
+        git clone https://github.com/radiac/caman.git caman-int
+        cd caman-int
+
+   * Your caman directory names don't need to match the ones in this example;
+     they don't even need to be caman installations. The ``caman`` script
+     operates on the current working directory, so if you install it
+     system-wide, your root and intermediate CAs can start as folders with
+     nothing but a configured ``ca`` directory. Just make sure you're in the
+     right directory when you call ``caman``.
+
+3. Configure your intermediate CA using the files in ``caman-int/ca`` - (see
+   [Configuration](#configuration))
+
+   * Make sure that your ``commonName`` is unique - it must be different to
+     your root CA's common name, any other intermediate CAs you create, and it
+     must not match any hosts
+   * Make sure that your CRL is at a different URL to that of your other CAs.
+
+4. Initialise your intermediate CA by passing the caman dir for your root CA as
+   an argument to ``init``:
+
+        ./caman init ca:../caman-root
+
+   * Note that CA paths are always specified with the ``ca:`` prefix
+   * You now have your root CA in ``caman-root`` and your intermediate CA in
+     ``caman-int``
+   * Your intermediate CA's chain file is ``caman-int/ca/ca-chain.crt.pem``
+
+   You are now ready to
+   [create and manage host certificates](#managing-host-certificates) using
+   the new intermediate CA.
+
+5. Optional: Publish ``caman-int/ca/ca.crl.pem`` at the URL in your
+   intermediate CA's configuration (or you can you disable CRL in your config).
+
+6. Optional: Move your your ``caman-root`` dir to secure offline storage
+
+Note: you can use a caman intermediate CA to create further intermediate CAs,
+should you so wish.
+
+
+#### Managing host certificates with an intermediate CA
+
+Caman's syntax for managing host certificates is the same whether or not you
+are using an intermediate CA, but creating a host certificate with an
+intermediate CA will also create a file called ``hostname.chained.crt.pem``
+(with corresponding ``hostname.chained.keycrt.pem``), which is a combined
+certificate containing your host's certificate along with the intermediate CA's
+trust chain.
+
+Some servers will want you to use these combined certificates (eg nginx's ``ssl_certificate`` directive, or Dovecot's ``ssl_cert`` setting), whereas others
+will want you to use the plain host certificate and provide the chain file in
+``caman-int/ca/ca-chain.crt.pem`` separately (eg Apache's
+``SSLCACertificateFile`` directive).
+
+
+#### Revoking an intermediate CA
+
+Revoke an intermediate CA from your root CA by passing a CA path to ``revoke``;
+instead of a hostname, use the  ``ca:`` prefix, and the path to the caman dir
+for your intermediate CA:
+
+    cd caman-root
+    ./caman revoke ca:../caman-int
+
+Your intermediate CA has now been revoked; publish the updated CRL for your
+root CA, ``caman-root/ca/ca.crl.pem``.
+
+You cannot use caman to renew intermediate CAs; you have to revoke them and
+start again.
 
 
 ### Managing host certificates
