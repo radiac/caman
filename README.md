@@ -8,12 +8,28 @@ accompanying article,
 [Self-Signing Certificate Authorities](http://radiac.net/blog/2015/05/self-ca/)
 
 This document explains how to use caman to
-[create a certificate authority](#creating-a-certificate-authority), and to
+[create a certificate authority](#creating-a-certificate-authority), optionally [use an intermediate CA](#using-an-intermediate-ca), and to
 [create, sign, renew and revoke](#managing-host-certificates) host
 certificates.
 
 Version 0.3.0, 2015-09-08. For changelog and upgrade information, see
 [Changes](CHANGES.md)
+
+### Quickstart
+
+To create a certificate authority and start signing:
+
+    git clone https://github.com/radiac/caman.git
+    cd caman
+    cp ca/caconfig.cnf.default ca/caconfig.cnf && vi ca/caconfig.cnf
+    cp ca/host.cnf.default ca/host.cnf && vi ca/host.cnf
+    ./caman init
+    ./caman new host.example.com
+    ./caman sign host.example.com
+    ./caman renew host.example.com
+    ./caman revoke host.example.com
+
+Read on to see more details, how you can do this using an intermediate certificate authority, and how to create wildcard and SAN certificates.
 
 
 ### Creating a Certificate Authority
