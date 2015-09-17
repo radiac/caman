@@ -2,6 +2,11 @@
 
 ### Changelog
 
+**0.3.1**, 2015-09-17: Fixes from [foudfou](https://github.com/foudfou)
+* ``new`` accepts arguments for SAN certificates again
+* Changed shebang for better compatibility
+* Removed trailing whitespace
+
 **0.3.0**, 2015-09-08: Add intermediate CA support
 * See [Upgrading](#upgrading) below for upgrade instructions
 * ``init`` command changed to accept optional path to root caman CA dir

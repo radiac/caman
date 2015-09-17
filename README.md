@@ -12,7 +12,7 @@ This document explains how to use caman to
 [create, sign, renew and revoke](#managing-host-certificates) host
 certificates.
 
-Version 0.3.0, 2015-09-08. For changelog and upgrade information, see
+Version 0.3.1, 2015-09-17. For changelog and upgrade information, see
 [Changes](CHANGES.md)
 
 ### Quickstart
@@ -300,3 +300,10 @@ You will need to re-publish ``ca/ca.crl.pem`` after running this command.
 This revokes the existing certificate, and then creates a new one,
 so is suitable for replacing both expired or compromised host certificates
 You will need to re-publish ``ca/ca.crl.pem`` after running this command.
+
+
+### Contributing
+
+Contributions are welcome, preferably via pull request.
+
+Thanks to all contributors, who are listed in [CHANGES](CHANGES.md)
