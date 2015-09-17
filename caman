@@ -43,7 +43,7 @@ function call_openssl {
         read -sp "Enter CA password for $CAMANDIR: " CAPASS
         echo
     fi
-    
+
     # Run the command or exit on failure
     if $DEBUG ; then
         echo "caman> openssl $@"
@@ -101,19 +101,19 @@ function command_init {
     #
     # Initialise a new certificate authority
     #
-    
+
     # Check for existing CA certificate
     if [[ -f "$CADIR/ca.crt.pem" ]] ; then
         echo "Certificate authority already exists"
         exit 1
     fi
-    
+
     # Check config exists
     if [[ ! -f "$CADIR/caconfig.cnf" ]] ; then
         echo "Could not find caconfig.cnf"
         exit 1
     fi
-    
+
     # Argument is not a host, it's the path to the root CA
     # If given a root CA, check it exists and is a valid caman installation
     ROOT_CA=$(split_ca $HOST)
@@ -142,14 +142,14 @@ function command_init {
     mkdir "$CADIR/newcerts" "$STOREDIR" || exit 1
     touch "$CADIR/index.txt"
     echo '01' > "$CADIR/serial"
-    
+
     # Get CA age
     DAYS=$(get_days "$CADIR/caconfig.cnf")
     if [[ -z $DAYS ]] ; then
         echo "Cannot find default_days in caconfig.cnf"
         exit 1
     fi
-    
+
     # Create CA key
     # OpenSSL arguments:
     #   genrsa              Command for generating an RSA key
@@ -159,7 +159,7 @@ function command_init {
     echo "Generating CA private key..."
     call_openssl_genrsa -aes256 -out "$CADIR/ca.key.pem" 4096
     chmod 400 "$CADIR/ca.key.pem"
-    
+
     # Different actions depending whether this is a root or intermediate CA
     if [[ $ROOT_CA ]] ; then
         # Root CA specified
@@ -178,11 +178,11 @@ function command_init {
             -key "$CADIR/ca.key.pem" \
             -out "$CADIR/ca.csr" \
             -config "$CADIR/caconfig.cnf" -batch
-        
+
         # Sign it using the root CA
         echo "Signing the intermediate CA certificate..."
         (cd "$ROOT_CA" && "$CAMAN" sign "ca:$CAMANDIR") || exit 1
-        
+
         # Create the chain file
         # Should be in reverse order (host first, root last)
         # We're instructing to distribute the root CA cert, so no need to put
@@ -196,7 +196,7 @@ function command_init {
             # Root CA is the root CA; just use our cert for the chain
             cp "$CADIR/ca.crt.pem" "$CADIR/ca-chain.crt.pem" || exit 1
         fi
-        
+
     else
         # No root CA specified
         #
@@ -212,11 +212,11 @@ function command_init {
         call_openssl_req -x509 -new -key "$CADIR/ca.key.pem" -days $DAYS \
             -out "$CADIR/ca.crt.pem" -config "$CADIR/caconfig.cnf"
     fi
-    
+
     # Create the CRL
     echo '01' > "$CADIR/crlnumber"
     generate_crl
-    
+
     echo "Certificate authority created"
 }
 
@@ -224,14 +224,14 @@ function command_new {
     #
     # Add a new host
     #
-    
+
     # Create new config
     mkdir "$HOSTDIR" || exit 1
     cp "$CADIR/host.cnf" "$HOSTDIR/config.cnf"
-    
+
     # Set hostname
     perl -pi -e "s/<<HOSTNAME>>/$HOST/g" "$HOSTDIR/config.cnf"
-    
+
     # Add alt hostnames
     CAMAN_ALT_HOSTNAMES="${*:2}"
     PERL_ALT_HOSTNAMES='
@@ -254,14 +254,14 @@ function command_sign_host {
     #
     # Create a new CSR, private key and signed certificate
     #
-    
+
     # Get certificate age
     DAYS=$(get_days "$HOSTDIR/config.cnf")
     if [[ -z $DAYS ]] ; then
         echo "Cannot find default_days in $HOSTDIR/config.cnf"
         exit 1
     fi
-    
+
     # Determine where the cert is going
     CERTDIR="$HOSTDIR/$DATEDIR"
     INSTANCE=1
@@ -269,10 +269,10 @@ function command_sign_host {
         let INSTANCE++
     done
     CERTDIR="$CERTDIR-$INSTANCE"
-    
+
     # Generate directory for this cert
     mkdir "$CERTDIR" || exit 1
-    
+
     # Create a new CSR and private key
     # OpenSSL arguments:
     #   req                 Command for CSR management
@@ -289,7 +289,7 @@ function command_sign_host {
         -newkey rsa:2048 -nodes -keyout "$CERTDIR/$HOST.key.pem" \
         -new -out "$CERTDIR/$HOST.csr" \
         -config "$HOSTDIR/config.cnf" -batch
-    
+
     # Sign the request
     # OpenSSL arguments:
     #   ca                  Command for CA management
@@ -308,13 +308,13 @@ function command_sign_host {
     cat "$CERTDIR/$HOST.key.pem" "$CERTDIR/$HOST.crt.pem" \
         > "$CERTDIR/$HOST.keycrt.pem" \
         || exit 1
-    
+
     # Create chained certs if this is an intermediate CA
     if [[ -f "$CADIR/ca-chain.crt.pem" ]] ; then
         cat "$CERTDIR/$HOST.crt.pem" "$CADIR/ca-chain.crt.pem" \
             > "$CERTDIR/$HOST.chained.crt.pem" \
             || exit 1
-        
+
         cat "$CERTDIR/$HOST.key.pem" "$CERTDIR/$HOST.chained.crt.pem" \
             > "$CERTDIR/$HOST.chained.keycrt.pem" \
             || exit 1
@@ -326,7 +326,7 @@ function command_sign_ca {
     #
     # Sign an intermediate CA with this certificate
     #
-    
+
     # Check it exists and is a valid caman installation ready to be signed
     if [[ ! -d "$INTERMEDIATE_CA" ]] ; then
         echo "Intermediate CA path does not exist"
@@ -344,14 +344,14 @@ function command_sign_ca {
         echo "Intermediate CA does not have a CSR"
         exit 1
     fi
-    
+
     # Get certificate age from intermediate CA config
     DAYS=$(get_days "$INTERMEDIATE_CA/$CADIR_NAME/caconfig.cnf")
     if [[ -z $DAYS ]] ; then
         echo "Cannot find default_days in intermediate CA caconfig.cnf"
         exit 1
     fi
-    
+
     # Sign the request
     # OpenSSL arguments:
     #   ca                  Command for CA management
@@ -367,7 +367,7 @@ function command_sign_ca {
         -days $DAYS -notext \
         -extensions v3_ca \
         -config "$CADIR/caconfig.cnf"
-    
+
     echo "Intermediate CA certificate generated"
 }
 
@@ -377,7 +377,7 @@ function command_revoke {
     #
     local INTERMEDIATE_CA=$(split_ca $HOST)
     local REVOKE_CN
-    
+
     if [[ $INTERMEDIATE_CA ]] ; then
         # Check intermediate CA exists
         if [[ ! -d "$INTERMEDIATE_CA" ]] ; then
@@ -388,7 +388,7 @@ function command_revoke {
             echo "Intermediate CA has not been configured"
             exit 1
         fi
-        
+
         # Get the common name frmo the intermediate CA's config to use as the
         # hostname
         REVOKE_CN=$( \
@@ -398,7 +398,7 @@ function command_revoke {
     else
         REVOKE_CN="$HOST"
     fi
-    
+
     # Read index of valid cert for this host
     INDEX=$( \
         grep -F "/CN=$REVOKE_CN/" $CADIR/index.txt \
@@ -422,17 +422,17 @@ function command_revoke {
     call_openssl_ca \
         -revoke "$CADIR/newcerts/$INDEX.pem" \
         -config "$CADIR/caconfig.cnf"
-    
+
     # Update the CRL
     generate_crl
-    
+
     if [[ $INTERMEDIATE_CA ]] ; then
         echo "Intermediate CA revoked"
     else
         echo "Certificate revoked"
     fi
 }
-    
+
 
 #
 # Process command
@@ -440,22 +440,22 @@ function command_revoke {
 
 case "$CMD" in
     init)
-        # Initialise a new certificate authority 
+        # Initialise a new certificate authority
         command_init
 
         ;;
-        
+
     new)
         # Add a new host, ready to sign
         if [[ $(split_ca $HOST) ]] ; then
             echo "Cannot add new \"ca:\" path"
             exit 1
         fi
-        
+
         command_new "$@"
-        
+
         ;;
-        
+
     sign)
         # Create a new CSR, private key and signed certificate
         # Internal use: if host starts with "ca:", sign the intermediate CA at
@@ -466,26 +466,26 @@ case "$CMD" in
         else
             command_sign_host
         fi
-        
+
         ;;
-        
+
     revoke)
         # Revoke a host certificate or intermediate CA
         command_revoke
 
         ;;
-        
+
     renew)
         # Renew a host certificate by revoking then signing
         if [[ $(split_ca $HOST) ]] ; then
             echo "Cannot renew a \"ca:\" path"
         fi
-        
+
         command_revoke
         command_sign_host
-        
+
         ;;
-        
+
     *)
         cat <<EOF
 Caman version $VERSION
@@ -497,7 +497,7 @@ Usage:  caman init [ca:<path/to/root_ca>]
         caman revoke <hostname>
         caman revoke ca:<path/to/intermediate_ca>
 EOF
-        
+
         ;;
 
 esac
