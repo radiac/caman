@@ -233,7 +233,7 @@ function command_new {
     perl -pi -e "s/<<HOSTNAME>>/$HOST/g" "$HOSTDIR/config.cnf"
     
     # Add alt hostnames
-    export CAMAN_ALT_HOSTNAMES="${*:2}"
+    CAMAN_ALT_HOSTNAMES="${*:2}"
     PERL_ALT_HOSTNAMES='
         if (/<<ALT_HOSTNAMES>>/) {
             my @hosts = split(/ /, "'$CAMAN_ALT_HOSTNAMES'");
@@ -452,7 +452,7 @@ case "$CMD" in
             exit 1
         fi
         
-        command_new
+        command_new "$@"
         
         ;;
         
