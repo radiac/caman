@@ -479,6 +479,7 @@ case "$CMD" in
         # Renew a host certificate by revoking then signing
         if [[ $(split_ca $HOST) ]] ; then
             echo "Cannot renew a \"ca:\" path"
+            exit 1
         fi
 
         command_revoke
