@@ -2,6 +2,9 @@
 
 ### Changelog
 
+**0.3.2**, 2016-11-24: Fix from [TakeMeNL](https://github.com/TakeMeNL)
+* Exit after "cannot renew" message
+
 **0.3.1**, 2015-09-17: Fixes from [foudfou](https://github.com/foudfou)
 * ``new`` accepts arguments for SAN certificates again
 * Changed shebang for better compatibility
