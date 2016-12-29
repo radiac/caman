@@ -124,18 +124,18 @@ In ``ca/host.cnf``:
 You need to distribute your ``ca/ca.crt.pem`` to clients for your host
 certificates to be recognised.
 
-To install system-wide in Debian and Ubuntu:
+To install your CA cert system-wide in Debian and Ubuntu:
 
     sudo cp ca/ca.crt.pem /usr/local/share/ca-certificates/my_ca_name.crt
     sudo dpkg-reconfigure ca-certificates
 
-To install system-wide in other Linux distros:
+To install your CA cert system-wide in other Linux distros:
 
     cp ca/ca.crt.pem "/etc/openssl/certs/$( \
         openssl x509 -inform PEM -subject_hash -in ca/ca.crt.pem | head -1 \
     ).0"
 
-To install system-wide in Windows:
+To install your CA cert system-wide in Windows:
 
 1. For Windows Certificate Manager to recognise your certificate, you will need
    to remove the ``.pem`` file extension and distribute the file as ``ca.crt``.
