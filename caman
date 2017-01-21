@@ -411,7 +411,7 @@ function command_revoke {
             # Read ca.crl.pem to find out the list of revoked certs
             if [[ -f "$CADIR/ca.crl.pem" ]] ; then
                 echo "Reading CRL certificate from $CADIR/ca.crl.pem"; echo ""
-                openssl crl -inform PEM -text -noout -in $CADIR/ca.crl.pem | grep -B 1 "Serial Number:"
+                openssl crl -inform PEM -text -noout -in $CADIR/ca.crl.pem | grep -B 3 -A 1 "Serial Number:"
                 exit 1
             else
                 echo "Cannot find ca.crl.pem in $CADIR/"
