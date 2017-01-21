@@ -407,6 +407,15 @@ function command_revoke {
     if [[ -z $INDEX ]] ; then
         if [[ $INTERMEDIATE_CA ]] ; then
             echo "Cannot find valid certificate for specified intermediate CA"
+        elif [[ "list" ]] ; then
+            # Read ca.crl.pem to find out the list of revoked certs
+            if [[ -f "$CADIR/ca.crl.pem" ]] ; then
+                echo "Reading CRL certificate from $CADIR/ca.crl.pem"; echo ""
+                openssl crl -inform PEM -text -noout -in $CADIR/ca.crl.pem | grep -B 1 "Serial Number:"
+                exit 1
+            else
+                echo "Cannot find ca.crl.pem in $CADIR/"
+            fi
         else
             echo "Cannot find valid certificate for $REVOKE_CN"
         fi
@@ -495,6 +504,7 @@ Usage:  caman init [ca:<path/to/root_ca>]
         caman new <hostname> [<alt> [<alt> [...]]]
         caman sign <hostname>
         caman renew <hostname>
+        caman revoke list
         caman revoke <hostname>
         caman revoke ca:<path/to/intermediate_ca>
 EOF
