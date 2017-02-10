@@ -7,7 +7,7 @@
 VERSION="0.3.2"
 
 # Settings
-DEBUG=false
+DEBUG=true
 
 # Arguments
 CMD=$1
