@@ -7,13 +7,20 @@
 VERSION="0.3.2"
 
 # Settings
-DEBUG=false
+DEBUG=true
 
 # Arguments
 CMD=$1
 HOST=$2
 
 # Paths
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+INSTALL_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 CAMAN=$(cd "`dirname "${BASH_SOURCE[0]}"`" && pwd)/`basename "${BASH_SOURCE[0]}"`
 CAMANDIR=$(pwd)
 CADIR_NAME="ca"
@@ -24,7 +31,7 @@ HOSTDIR="$STOREDIR/$HOST"
 DATEDIR=$(date +"%Y-%m-%d")
 
 # Check cert authority directory exists
-if [[ ! -d "$CADIR" ]]; then
+if [[ ! -d "$CADIR" && "$CMD" != "create" ]]; then
     echo "Certificate authority directory does not exist"
     exit 1
 fi
@@ -433,6 +440,21 @@ function command_revoke {
     fi
 }
 
+function command_create {
+
+    if [[ -d $CADIR ]] ; then
+        echo "Certificate authority directory already exists"
+        exit 1
+    fi
+
+    mkdir "$CADIR" || exit 1
+    cp "$INSTALL_DIR/ca/caconfig.cnf.default" "$CADIR/caconfig.cnf" || exit 1
+    cp "$INSTALL_DIR/ca/host.cnf.default" "$CADIR/host.cnf" || exit 1
+
+    echo "Certificate authority created, edit configuration files then run:"
+    echo "        caman init"
+
+}
 
 #
 # Process command
@@ -484,6 +506,11 @@ case "$CMD" in
 
         command_revoke
         command_sign_host
+
+        ;;
+
+    create)
+        command_create
 
         ;;
 
