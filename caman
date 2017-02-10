@@ -48,7 +48,6 @@ function call_openssl {
             if [[ 0 -eq ${#CAPASS} ]] ; then
                 touch "$CADIR/password" || exit 1
                 chmod 600 "$CADIR/password" || exit 1
-                read
                 (openssl rand -base64 33 || exit 1) > "$CADIR/password"
                 chmod 400 "$CADIR/password" || exit 1
                 CAPASS=$(<"$CADIR/password")
