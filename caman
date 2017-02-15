@@ -46,9 +46,23 @@ function call_openssl {
     # Wrapper for openssl which caches the CA password and makes it available
     # on openssl's password source "fd:0"
     if [[ -z ${CAPASS+x} ]] ; then
-        # CAPASS is not set - get password for this certificate authority
-        read -sp "Enter CA password for $CAMANDIR: " CAPASS
-        echo
+        if [[ -f "$CADIR/password" ]] ; then
+            CAPASS=$(<"$CADIR/password")
+        else
+            # CAPASS is not set - get password for this certificate authority
+            read -sp "Enter CA password for $CAMANDIR: " CAPASS
+            echo
+            if [[ 0 -eq ${#CAPASS} ]] ; then
+                touch "$CADIR/password" || exit 1
+                chmod 600 "$CADIR/password" || exit 1
+                (openssl rand -base64 33 || exit 1) > "$CADIR/password"
+                chmod 400 "$CADIR/password" || exit 1
+                CAPASS=$(<"$CADIR/password")
+                echo "Generated CA password stored in $CADIR/password"
+                echo "WARNING: CA password is stored in plain text. This is only appropriate in"
+                echo "WARNING: non-production situations, or if access to this store is secured."
+            fi
+        fi
     fi
 
     # Run the command or exit on failure
