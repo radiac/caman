@@ -316,6 +316,23 @@ function command_sign_host {
         cat "$CERTDIR/$HOST.key.pem" "$CERTDIR/$HOST.crt.pem" \
             > "$CERTDIR/$HOST.keycrt.pem" \
             || exit 1
+
+        # Create password for PKCS12 stores
+        if [[ ! -f "$CERTDIR/password" ]] ; then
+            touch "$CERTDIR/password" || exit 1
+            chmod 600 "$CERTDIR/password" || exit 1
+            (openssl rand -base64 33 || exit 1) > "$CERTDIR/password"
+            chmod 400 "$CERTDIR/password" || exit 1
+        fi
+
+        # Create basic PKCS12 store
+        openssl pkcs12 -export \
+            -inkey "$CERTDIR/$HOST.key.pem" \
+            -in "$CERTDIR/$HOST.crt.pem" \
+            -out "$CERTDIR/$HOST.p12" \
+            -passout "file:$CERTDIR/password" \
+            || exit 1
+        chmod 400 "$CERTDIR/$HOST.p12" || exit 1
     fi
 
     # Create chained certs if this is an intermediate CA
@@ -328,6 +345,16 @@ function command_sign_host {
             cat "$CERTDIR/$HOST.key.pem" "$CERTDIR/$HOST.chained.crt.pem" \
                 > "$CERTDIR/$HOST.chained.keycrt.pem" \
                 || exit 1
+
+            # Create chained PKCS12 store
+            openssl pkcs12 -export \
+                -inkey "$CERTDIR/$HOST.key.pem" \
+                -in "$CERTDIR/$HOST.crt.pem" \
+                -certfile "$CADIR/ca-chain.crt.pem" \
+                -out "$CERTDIR/$HOST.chained.p12" \
+                -passout "file:$CERTDIR/password" \
+                || exit 1
+            chmod 400 "$CERTDIR/$HOST.chained.p12" || exit 1
         fi
     fi
     echo "Certificate generated"
