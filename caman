@@ -354,6 +354,17 @@ function command_sign_host {
             -passout "file:$CERTDIR/password" \
             || exit 1
         chmod 400 "$CERTDIR/$HOST.p12" || exit 1
+
+        if type keytool > /dev/null 2>&1 ; then
+            keytool -importkeystore \
+                -srckeystore "$CERTDIR/$HOST.p12" \
+                -srcstoretype pkcs12 \
+                -srcstorepass:file "$CERTDIR/password" \
+                -destkeystore "$CERTDIR/$HOST.jks" \
+                -deststoretype jks \
+                -deststorepass:file "$CERTDIR/password" || exit 1
+            chmod 400 "$CERTDIR/$HOST.jks" || exit 1
+        fi
     fi
 
     # Create chained certs if this is an intermediate CA
