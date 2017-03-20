@@ -240,7 +240,7 @@ function command_new {
             foreach $h (@hosts) {
                 $h = ($h =~ /^\d+(\.\d+){3}+$/ ? "IP:" : "DNS:") . $h;
             }
-            print "subjectAltName = " . join(", ", @hosts) . "\n" if @hosts > 1;
+            print "subjectAltName = " . join(", ", @hosts) . "\n" if @hosts;
         } else {
             print;
         }
