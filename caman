@@ -487,6 +487,10 @@ case "$CMD" in
 
         ;;
 
+    crl)
+        generate_crl
+
+        ;;
     *)
         cat <<EOF
 Caman version $VERSION
@@ -497,6 +501,7 @@ Usage:  caman init [ca:<path/to/root_ca>]
         caman renew <hostname>
         caman revoke <hostname>
         caman revoke ca:<path/to/intermediate_ca>
+        caman crl
 EOF
 
         ;;
