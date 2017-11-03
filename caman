@@ -311,7 +311,7 @@ function command_sign_host {
 
     # Create chained certs if this is an intermediate CA
     if [[ -f "$CADIR/ca-chain.crt.pem" ]] ; then
-        cat "$CERTDIR/$HOST.crt.pem" "$CADIR/ca-chain.crt.pem" \
+        cat "$CADIR/ca-chain.crt.pem" "$CERTDIR/$HOST.crt.pem" \
             > "$CERTDIR/$HOST.chained.crt.pem" \
             || exit 1
 
