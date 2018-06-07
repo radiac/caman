@@ -80,7 +80,24 @@ emailAddress            = email@example.com
 # Extensions to use when generating server certificates
 [ usr_cert ]
 basicConstraints        = CA:FALSE
-nsComment               = "OpenSSL Generated Certificate"
+nsCertType              = server
+keyUsage                = critical, digitalSignature, keyEncipherment
+extendedKeyUsage        = serverAuth
+nsComment               = "OpenSSL Generated Server Certificate"
+subjectKeyIdentifier    = hash
+authorityKeyIdentifier  = keyid,issuer
+# >> Change the following URL
+crlDistributionPoints   = URI:http://example.com/ca.crl.pem
+# << End changes
+
+####################################################################
+# Extensions to use when generating client certificates
+[ client_cert ]
+basicConstraints        = CA:FALSE
+nsCertType              = client, email
+keyUsage                = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage        = clientAuth, emailProtection
+nsComment               = "OpenSSL Generated Client Certificate"
 subjectKeyIdentifier    = hash
 authorityKeyIdentifier  = keyid,issuer
 # >> Change the following URL
