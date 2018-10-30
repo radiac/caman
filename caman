@@ -250,9 +250,10 @@ function command_new {
     echo "New host added"
 }
 
-function command_sign_host {
+function command_sign_common {
     #
     # Create a new CSR, private key and signed certificate
+    # First argument is an extensions to be used for signing, defaults to usr_cert
     #
 
     # Get certificate age
@@ -302,6 +303,7 @@ function command_sign_host {
     call_openssl_ca \
         -in "$CERTDIR/$HOST.csr" -out "$CERTDIR/$HOST.crt.pem" \
         -days $DAYS -notext \
+        -extensions "${1:-usr_cert}" \
         -config "$CADIR/caconfig.cnf"
 
     # Concat the key and certificate
@@ -320,6 +322,22 @@ function command_sign_host {
             || exit 1
     fi
     echo "Certificate generated"
+}
+
+function command_sign_host {
+    #
+    # Create a new CSR, private key and signed certificate (for servers)
+    #
+
+    command_sign_common usr_cert
+}
+
+function command_sign_client {
+    #
+    # Create a new CSR, private key and signed certificate (for clients)
+    #
+
+    command_sign_common client_cert
 }
 
 function command_sign_ca {
@@ -469,6 +487,12 @@ case "$CMD" in
 
         ;;
 
+    client_sign)
+        # Create a new CSR, private key and signed certificate (for clients)
+        command_sign_client
+
+        ;;
+
     revoke)
         # Revoke a host certificate or intermediate CA
         command_revoke
@@ -487,6 +511,13 @@ case "$CMD" in
 
         ;;
 
+    client_renew)
+        # Renew a client certificate by revoking then signing
+        command_revoke
+        command_sign_client
+
+        ;;
+
     *)
         cat <<EOF
 Caman version $VERSION
@@ -495,6 +526,8 @@ Usage:  caman init [ca:<path/to/root_ca>]
         caman new <hostname> [<alt> [<alt> [...]]]
         caman sign <hostname>
         caman renew <hostname>
+        caman client_sign <hostname>
+        caman client_renew <hostname>
         caman revoke <hostname>
         caman revoke ca:<path/to/intermediate_ca>
 EOF

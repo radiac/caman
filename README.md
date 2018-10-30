@@ -283,8 +283,10 @@ example, to change the organisational unit name from your default).
 
     ./caman sign <hostname>
 
-This will generate a new private key, CSR, and signed certificate
+This will generate a new private key, CSR, and signed server certificate.
+For client certificates use following command:
 
+    ./caman client_sign <hostname>
 
 #### Revoke a certificate
 
@@ -300,7 +302,9 @@ You will need to re-publish ``ca/ca.crl.pem`` after running this command.
 This revokes the existing certificate, and then creates a new one,
 so is suitable for replacing both expired or compromised host certificates
 You will need to re-publish ``ca/ca.crl.pem`` after running this command.
+For client certificates use following command:
 
+    ./caman client_renew <hostname>
 
 ### Contributing
 
