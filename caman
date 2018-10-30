@@ -273,22 +273,29 @@ function command_sign_host {
     # Generate directory for this cert
     mkdir "$CERTDIR" || exit 1
 
-    # Create a new CSR and private key
-    # OpenSSL arguments:
-    #   req                 Command for CSR management
-    #   -new                Generate a new CSR
-    #   -sha256             Force OpenSSL to use SHA256
-    #   -newkey rsa:2048    Generate a new 2048 bit RSA private key
-    #   -nodes              Do not encrypt the private key
-    #   -keyout "..."       Path to save new key
-    #   -out "..."          Path to save new CSR
-    #   -config "..."       Path to host config created by ``new``
-    # No need for CA password here
-    echo "Creating CSR and private key..."
-    call_openssl req -sha256 \
-        -newkey rsa:2048 -nodes -keyout "$CERTDIR/$HOST.key.pem" \
-        -new -out "$CERTDIR/$HOST.csr" \
-        -config "$HOSTDIR/config.cnf" -batch
+    # If there is already a CSR, we don't need to create it, or the related pk
+    if [[ -f "$HOSTDIR/$HOST.csr" ]] ; then
+        echo "Using supplied CSR"
+        mv "$HOSTDIR/$HOST.csr" "$CERTDIR/$HOST.csr"
+    else
+
+        # Create a new CSR and private key
+        # OpenSSL arguments:
+        #   req                 Command for CSR management
+        #   -new                Generate a new CSR
+        #   -sha256             Force OpenSSL to use SHA256
+        #   -newkey rsa:2048    Generate a new 2048 bit RSA private key
+        #   -nodes              Do not encrypt the private key
+        #   -keyout "..."       Path to save new key
+        #   -out "..."          Path to save new CSR
+        #   -config "..."       Path to host config created by ``new``
+        # No need for CA password here
+        echo "Creating CSR and private key..."
+        call_openssl req -sha256 \
+            -newkey rsa:2048 -nodes -keyout "$CERTDIR/$HOST.key.pem" \
+            -new -out "$CERTDIR/$HOST.csr" \
+            -config "$HOSTDIR/config.cnf" -batch
+    fi
 
     # Sign the request
     # OpenSSL arguments:
@@ -304,10 +311,12 @@ function command_sign_host {
         -days $DAYS -notext \
         -config "$CADIR/caconfig.cnf"
 
-    # Concat the key and certificate
-    cat "$CERTDIR/$HOST.key.pem" "$CERTDIR/$HOST.crt.pem" \
-        > "$CERTDIR/$HOST.keycrt.pem" \
-        || exit 1
+    if [[ -f "$CERTDIR/$HOST.key.pem" ]] ; then
+        # Concat the key and certificate
+        cat "$CERTDIR/$HOST.key.pem" "$CERTDIR/$HOST.crt.pem" \
+            > "$CERTDIR/$HOST.keycrt.pem" \
+            || exit 1
+    fi
 
     # Create chained certs if this is an intermediate CA
     if [[ -f "$CADIR/ca-chain.crt.pem" ]] ; then
@@ -315,9 +324,11 @@ function command_sign_host {
             > "$CERTDIR/$HOST.chained.crt.pem" \
             || exit 1
 
-        cat "$CERTDIR/$HOST.key.pem" "$CERTDIR/$HOST.chained.crt.pem" \
-            > "$CERTDIR/$HOST.chained.keycrt.pem" \
-            || exit 1
+        if [[ -f "$CERTDIR/$HOST.key.pem" ]] ; then
+            cat "$CERTDIR/$HOST.key.pem" "$CERTDIR/$HOST.chained.crt.pem" \
+                > "$CERTDIR/$HOST.chained.keycrt.pem" \
+                || exit 1
+        fi
     fi
     echo "Certificate generated"
 }
